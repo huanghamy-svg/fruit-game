@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>動動腦！水果大冒險</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF3E2; --ray:#FFE7C9; --ink:#4A2E2A; --card:#FFFFFF;
+  --orange:#F28C28; --green:#4F8A2B; --red:#E4572E; --yellow:#FFD24D; --teal:#3BB39B;
+  --blue:#BFE3F7; --blue-ink:#1D4E6B; --shadow:rgba(74,46,42,.22);
+  --c1:#F6A5B5; --c2:#9ED35A; --c3:#FFD24D;
+  --btn-ink:#3A2220;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#2B2030; --ray:#33263A; --ink:#FFF0DD; --card:#3D2F44;
+    --green:#9ED35A; --blue:#274B63; --blue-ink:#D6F0FF; --shadow:rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#2B2030; --ray:#33263A; --ink:#FFF0DD; --card:#3D2F44;
+  --green:#9ED35A; --blue:#274B63; --blue-ink:#D6F0FF; --shadow:rgba(0,0,0,.45);
+}
+html{height:100%; scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box;}
+body{
+  margin:0; min-height:100%;
+  font-family:"Chiron GoRound TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",
+              "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  font-weight:500; color:var(--ink); background-color:var(--bg);
+  background-image:repeating-conic-gradient(from 0deg at 50% 36%, var(--bg) 0 7.5deg, var(--ray) 7.5deg 15deg);
+  background-attachment:fixed;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+}
+#app{
+  min-height:100dvh; max-width:640px; margin:0 auto;
+  display:flex; flex-direction:column; padding:8px 16px 18px;
+}
+button{font:inherit; color:inherit;}
+:focus-visible{outline:4px solid var(--teal); outline-offset:3px;}
+
+/* ---------- header ---------- */
+.top{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:56px;}
+.stars{display:flex; gap:4px;}
+.star{font-size:28px; filter:grayscale(1); opacity:.35; transition:opacity .2s;}
+.star.on{filter:none; opacity:1; animation:pop .5s;}
+.tools{display:flex; gap:8px;}
+.iconbtn{
+  width:48px; height:48px; border-radius:50%; border:3px solid var(--ink);
+  background:var(--card); box-shadow:0 3px 0 var(--ink); font-size:22px; font-weight:800;
+  display:grid; place-items:center; cursor:pointer; padding:0;
+}
+.iconbtn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ink);}
+.iconbtn[aria-pressed="false"]{opacity:.55;}
+.hide-text .name{display:none;}
+
+/* ---------- stage ---------- */
+#stage{flex:1; display:flex; flex-direction:column; align-items:center; gap:12px; padding-top:6px;}
+.prompt{margin:4px 0 0; text-align:center; font-weight:900; font-size:clamp(24px,6.4vw,36px); line-height:1.25;}
+.qmark{color:var(--red);}
+.sub{margin:-4px 0 0; text-align:center; font-size:clamp(16px,4.2vw,20px); font-weight:800;}
+
+.grid{
+  display:grid; grid-template-columns:1fr 1fr;
+  width:min(84vw,420px,40dvh); aspect-ratio:1;
+  border:4px solid var(--ink); border-radius:18px; overflow:hidden; background:var(--card);
+}
+.cell{
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  border:2px solid var(--ink); position:relative; transition:background .2s;
+}
+.cell .art{font-size:clamp(46px,14vw,84px); line-height:1; display:grid; place-items:center;}
+.cell .art svg,.opt .art svg{width:1.05em; height:1.05em;}
+.name{font-size:clamp(14px,3.6vw,18px); font-weight:800;}
+.slot .q{font-size:clamp(54px,17vw,96px); font-weight:900; color:var(--red); animation:bob 1.6s ease-in-out infinite;}
+.slot.hot{background:var(--blue);}
+.slot.filled{background:#E7F6D5;}
+:root[data-theme="dark"] .slot.filled{background:#35502A;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .slot.filled{background:#35502A;}}
+.slot.filled::after{
+  content:"✓"; position:absolute; top:6px; right:8px; width:32px; height:32px; border-radius:50%;
+  background:var(--green); color:#fff; font-weight:900; display:grid; place-items:center; font-size:20px;
+  animation:pop .45s;
+}
+
+.nudge{
+  min-height:40px; display:flex; align-items:center; justify-content:center;
+  padding:6px 16px; border-radius:999px; font-weight:800; font-size:clamp(16px,4.2vw,20px);
+  color:var(--blue-ink); background:transparent; text-align:center;
+}
+.nudge:not(:empty){background:var(--blue); animation:pop .35s;}
+
+.tray{display:flex; gap:12px; justify-content:center; width:100%; min-height:132px; align-items:stretch;}
+.opt{
+  position:relative; flex:1; max-width:140px; aspect-ratio:1; padding:0; cursor:grab;
+  background:var(--card); border:4px solid var(--ink); border-radius:22px; box-shadow:0 5px 0 var(--ink);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  touch-action:none; user-select:none; -webkit-user-select:none; z-index:1;
+}
+.opt .art{font-size:clamp(44px,13vw,72px); line-height:1; display:grid; place-items:center; pointer-events:none;}
+.opt .name{pointer-events:none;}
+.opt.dragging{z-index:50; cursor:grabbing; box-shadow:0 16px 22px var(--shadow); transition:none;}
+.opt.back{transition:transform .28s cubic-bezier(.3,1.5,.5,1);}
+.opt.used{visibility:hidden;}
+.opt.wobble{animation:wobble .45s;}
+
+.panel{
+  width:100%; text-align:center; background:var(--card); border:4px solid var(--ink);
+  border-radius:24px; box-shadow:0 5px 0 var(--ink); padding:14px 16px 16px; animation:pop .4s;
+}
+.panel h2{margin:0 0 4px; font-size:clamp(24px,6.4vw,32px); font-weight:900; color:var(--green);}
+.panel p{margin:0 0 10px; font-size:clamp(18px,4.8vw,22px); font-weight:800;}
+.hintbox{
+  margin:0 0 12px; padding:10px 14px; border-radius:18px; background:var(--blue); color:var(--blue-ink);
+  font-size:clamp(18px,4.8vw,24px); font-weight:800; line-height:1.45; animation:pop .35s;
+}
+.hintbox[hidden]{display:none;}
+.actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+.btn{
+  min-height:54px; padding:10px 22px; border-radius:999px; border:3px solid var(--ink);
+  background:var(--yellow); color:var(--btn-ink); font-weight:900; font-size:clamp(18px,4.8vw,22px);
+  box-shadow:0 4px 0 var(--ink); cursor:pointer;
+}
+.btn.primary{background:var(--orange);}
+.btn.big{font-size:clamp(24px,6.4vw,32px); padding:14px 40px; min-height:68px;}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink);}
+
+/* ---------- start ---------- */
+.start{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; text-align:center;}
+.title{
+  margin:0; font-weight:900; line-height:1.15; font-size:clamp(44px,13vw,72px);
+  color:var(--orange); -webkit-text-stroke:8px var(--ink); paint-order:stroke fill;
+  transform:rotate(-4deg);
+}
+.banner{
+  margin:0; padding:8px 22px; border:3px solid var(--ink); border-radius:12px;
+  background:#6FA33B; color:#fff; font-weight:800; font-size:clamp(17px,4.6vw,22px);
+}
+.fruitrow{font-size:clamp(34px,10vw,52px); letter-spacing:.1em;}
+
+/* ---------- train ---------- */
+.say{
+  width:100%; min-height:3.4em; display:flex; align-items:center; justify-content:center;
+  padding:12px 18px; background:var(--blue); color:var(--blue-ink); border:4px solid var(--ink);
+  border-radius:28px; font-size:clamp(22px,6vw,30px); font-weight:900; text-align:center; line-height:1.4;
+}
+.say.pop{animation:pop .4s;}
+.blank{display:inline-block; min-width:2.4em; border-bottom:5px solid currentColor; margin:0 .15em; height:1em; vertical-align:-.1em;}
+.trainwrap{width:100%; margin-top:auto; overflow:hidden; padding-top:6px;}
+.train{display:flex; align-items:flex-end; justify-content:center; gap:8px; transition:transform 1.9s cubic-bezier(.5,0,.9,.6);}
+.train.go{transform:translateX(-120vw);}
+.engine{font-size:clamp(60px,18vw,92px); line-height:1; padding-bottom:2px;}
+.car{
+  position:relative; width:clamp(76px,22vw,112px); aspect-ratio:1; border:4px solid var(--ink); border-radius:16px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--c1);
+}
+.car::before{content:""; position:absolute; left:-12px; top:62%; width:12px; height:5px; background:var(--ink);}
+.car.c2{background:var(--c2);} .car.c3{background:var(--c3);}
+.car .num{
+  position:absolute; top:-14px; left:-6px; width:30px; height:30px; border-radius:50%;
+  background:var(--card); border:3px solid var(--ink); display:grid; place-items:center; font-weight:900; font-size:17px;
+}
+.car .slotart{font-size:clamp(36px,11vw,56px); line-height:1; display:grid; place-items:center;}
+.car .slotart svg{width:1.05em; height:1.05em;}
+.car.hot{outline:4px dashed var(--ink); outline-offset:3px;}
+.car.filled .slotart{animation:pop .4s;}
+.track{height:8px; margin-top:4px; border-radius:4px; background:repeating-linear-gradient(90deg,var(--ink) 0 16px,transparent 16px 24px);}
+.juice{font-size:clamp(90px,28vw,150px); text-align:center; animation:pop .6s; line-height:1.1;}
+
+/* ---------- icon buttons, recorder, practice hub ---------- */
+.btn.icon{min-width:64px; padding:10px 16px; font-size:28px; line-height:1;}
+.nextbtn{
+  width:88px; height:64px; border-radius:22px; border:4px solid var(--ink); background:#9ED35A;
+  box-shadow:0 4px 0 var(--ink); display:grid; place-items:center; cursor:pointer; padding:0;
+}
+.nextbtn svg{width:36px; height:36px;}
+.nextbtn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--ink);}
+.nextbtn.big{width:136px; height:96px; border-radius:30px;}
+.nextbtn.big svg{width:58px; height:58px;}
+
+.rec{display:flex; gap:14px; justify-content:center; align-items:center; margin:0 0 12px;}
+.recbtn,.playbtn,.modelbtn,.selfcheck button{
+  border-radius:50%; border:4px solid var(--ink); box-shadow:0 4px 0 var(--ink); cursor:pointer;
+  display:grid; place-items:center; padding:0; color:var(--btn-ink);
+}
+.recbtn{width:80px; height:80px; font-size:38px; background:#FF8A78;}
+.recbtn.on{background:var(--red); outline:5px solid var(--red); outline-offset:3px; animation:pulse 1s ease-in-out infinite;}
+.playbtn{width:68px; height:68px; background:#9ED35A;}
+.playbtn svg{width:30px; height:30px;}
+.modelbtn{width:68px; height:68px; font-size:30px; background:var(--blue);}
+.playbtn:disabled{opacity:.35; cursor:default; box-shadow:none;}
+.selfcheck{display:flex; gap:16px; justify-content:center; margin:0 0 12px;}
+.selfcheck[hidden]{display:none;}
+.selfcheck button{width:64px; height:64px; font-size:34px; background:var(--card);}
+.selfcheck button.chosen{background:var(--yellow);}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+.hub{display:grid; grid-template-columns:1fr 1fr; gap:18px 14px; width:100%; margin-top:6px;}
+.combo{
+  position:relative; display:flex; align-items:center; justify-content:center; gap:2px; min-height:120px;
+  padding:12px 6px; background:var(--card); border:4px solid var(--ink); border-radius:22px;
+  box-shadow:0 5px 0 var(--ink); cursor:pointer;
+}
+.combo:active{transform:translateY(3px); box-shadow:0 2px 0 var(--ink);}
+.combo .art{font-size:clamp(30px,9vw,48px); line-height:1; display:grid; place-items:center;}
+.combo .art svg{width:1.05em; height:1.05em;}
+.combo .arr{font-size:18px; opacity:.6;}
+.combo.done::after{content:"⭐"; position:absolute; top:-14px; right:-8px; font-size:30px; animation:pop .5s;}
+
+/* ---------- teacher settings ---------- */
+.tlist{display:flex; flex-direction:column; gap:10px; width:100%;}
+.trow{
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  background:var(--card); border:3px solid var(--ink); border-radius:18px; padding:10px 12px;
+}
+.tl{flex:1; font-weight:800; font-size:16px; line-height:1.4;}
+.tstat{display:block; font-size:13px; font-weight:500; opacity:.85; margin-top:2px;}
+.tb{display:flex; gap:8px;}
+.tb button{
+  width:48px; height:48px; border-radius:50%; border:3px solid var(--ink); background:var(--card);
+  font-size:20px; cursor:pointer; padding:0; display:grid; place-items:center; color:var(--ink);
+}
+.tb .trec.on{background:var(--red); color:#fff;}
+.tb button:disabled{opacity:.35; cursor:default;}
+.tip{margin:0; font-size:14px; line-height:1.6; text-align:center; opacity:.9;}
+
+/* ---------- dialog ---------- */
+dialog{
+  max-width:min(92vw,520px); padding:20px 22px; border:4px solid var(--ink); border-radius:24px;
+  background:var(--card); color:var(--ink); font-family:inherit;
+}
+dialog::backdrop{background:rgba(40,20,20,.55);}
+dialog h2{margin:0 0 8px; font-size:24px; font-weight:900;}
+dialog h3{margin:14px 0 4px; font-size:18px; font-weight:800; color:var(--green);}
+dialog ul{margin:0; padding-left:1.2em; line-height:1.6; font-size:16px;}
+dialog .actions{margin-top:16px;}
+
+/* ---------- motion ---------- */
+@keyframes pop{0%{transform:scale(.8);opacity:.4}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes wobble{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important; transition:none !important;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="stars" id="stars" role="img" aria-label="還沒有星星"></div>
+    <div class="tools">
+      <button class="iconbtn" id="soundBtn" aria-pressed="true" aria-label="音效" title="音效">🔊</button>
+      <button class="iconbtn" id="textBtn" aria-pressed="true" aria-label="顯示文字" title="顯示或隱藏文字">字</button>
+      <button class="iconbtn" id="goalBtn" aria-label="教學目標" title="教學目標">📋</button>
+    </div>
+  </div>
+  <main id="stage"></main>
+</div>
+
+<dialog id="goals" aria-labelledby="goalsTitle">
+  <h2 id="goalsTitle">教學目標</h2>
+  <h3>語言理解與表達</h3>
+  <ul>
+    <li>能依照圖片順序說出動作句子（先…再…）</li>
+    <li>能理解物品與動作之間的關聯：刀子→切→水果→果汁機→打</li>
+    <li>能完整說出一句包含動作與目的的句子</li>
+  </ul>
+  <h3>認知與邏輯</h3>
+  <ul>
+    <li>能根據步驟排列事件順序</li>
+    <li>能從配對活動中找出「工具—食材—結果」的邏輯關係</li>
+  </ul>
+  <h3>動機與參與</h3>
+  <ul>
+    <li>願意開口模仿句子並參與說話活動</li>
+    <li>在遊戲過程中表達完成任務的成就感</li>
+  </ul>
+  <div class="actions"><button class="btn" id="teacherBtn">🎙️ 老師設定：錄示範語音</button><button class="btn primary" id="goalClose">關閉</button></div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- data ---------- */
+  var SVG_BLENDER = '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="27" y="76" width="46" height="16" rx="6" fill="#E4572E" stroke="#4A2E2A" stroke-width="3"/><circle cx="50" cy="84" r="3.5" fill="#FFF3E2"/><path d="M30 22h40l-6 54H36z" fill="#FBD3D0" stroke="#4A2E2A" stroke-width="3" stroke-linejoin="round"/><path d="M33.5 46h33l-2.6 30H36.1z" fill="#E4572E" opacity=".85"/><rect x="27" y="13" width="46" height="9" rx="4" fill="#4A2E2A"/><rect x="44" y="7" width="12" height="7" rx="3" fill="#4A2E2A"/></svg>';
+  var SVG_MICROWAVE = '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="26" width="88" height="52" rx="7" fill="#F1F1F1" stroke="#4A2E2A" stroke-width="3"/><rect x="14" y="34" width="46" height="36" rx="4" fill="#5B6770" stroke="#4A2E2A" stroke-width="2"/><rect x="18" y="38" width="16" height="28" rx="3" fill="#FFFFFF" opacity=".25"/><circle cx="77" cy="42" r="5" fill="#E4572E"/><circle cx="77" cy="56" r="5" fill="#3BB39B"/><rect x="70" y="65" width="14" height="4" rx="2" fill="#4A2E2A"/></svg>';
+  var SVG_FRIDGE = '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="27" y="6" width="46" height="88" rx="7" fill="#F4F4F4" stroke="#4A2E2A" stroke-width="3"/><line x1="27" y1="38" x2="73" y2="38" stroke="#4A2E2A" stroke-width="3"/><rect x="34" y="16" width="4" height="14" rx="2" fill="#4A2E2A"/><rect x="34" y="46" width="4" height="22" rx="2" fill="#4A2E2A"/></svg>';
+
+  var ITEMS = {
+    apple:{name:"蘋果", art:"🍎"}, grape:{name:"葡萄", art:"🍇"}, strawberry:{name:"草莓", art:"🍓"},
+    watermelon:{name:"西瓜", art:"🍉"}, boy:{name:"小男孩", art:"👦"}, shirt:{name:"衣服", art:"👕"},
+    spoon:{name:"湯匙", art:"🥄"}, scissors:{name:"剪刀", art:"✂️"}, chopsticks:{name:"筷子", art:"🥢"},
+    knife:{name:"刀子", art:"🔪"}, crayon:{name:"蠟筆", art:"🖍️"},
+    tv:{name:"電視", art:"📺"}, microwave:{name:"微波爐", art:SVG_MICROWAVE}, fridge:{name:"冰箱", art:SVG_FRIDGE},
+    blender:{name:"果汁機", art:SVG_BLENDER}, bed:{name:"床", art:"🛏️"}, trash:{name:"垃圾桶", art:"🗑️"},
+    icecream:{name:"冰淇淋", art:"🍨"}, bowl:{name:"碗", art:"🥣"}, veg:{name:"青菜", art:"🥬"}, pot:{name:"鍋子", art:"🍲"},
+    dumpling:{name:"餃子", art:"🥟"}, plate:{name:"盤子", art:"🍽️"}
+  };
+
+  var LEVELS = [
+    {grid:["apple","grape","strawberry",null], answer:"watermelon", options:["watermelon","shirt","boy"],
+     hint:"因為西瓜和蘋果、葡萄、草莓都是水果。"},
+    {grid:["spoon","scissors",null,"chopsticks"], answer:"knife", options:["shirt","crayon","knife"],
+     hint:"因為刀子和湯匙、剪刀、筷子都是工具。"},
+    {grid:["tv",null,"microwave","fridge"], answer:"blender", options:["blender","bed","trash"],
+     hint:"因為果汁機和電視、微波爐、冰箱都是電器。"}
+  ];
+
+  var SETS = [
+    {items:["knife","watermelon","blender"], verb:"切", dest:"果汁機打一打", reward:"🍹", win:"太棒了！果汁做好囉"},
+    {items:["spoon","icecream","bowl"], verb:"舀", dest:"碗裡", reward:"🍨", win:"太棒了！冰淇淋裝好囉"},
+    {items:["scissors","veg","pot"], verb:"剪", dest:"鍋子裡", reward:"🍲", win:"太棒了！青菜下鍋囉"},
+    {items:["chopsticks","dumpling","plate"], verb:"夾", dest:"盤子裡", reward:"🥟", win:"太棒了！餃子裝盤囉"}
+  ];
+  function sayParts(S){
+    var tool = ITEMS[S.items[0]].name, food = ITEMS[S.items[1]].name, b = '<span class="blank"></span>';
+    return [
+      '我先用'+b,
+      '我先用'+tool+S.verb+b,
+      '我先用'+tool+S.verb+food+'，再放進'+b,
+      '我先用'+tool+S.verb+food+'，再放進'+S.dest+'。'
+    ];
+  }
+
+  var state = {stars:[false,false,false,false], done:[false,false,false,false], sound:true, text:true};
+  var stage = document.getElementById("stage");
+  window.addEventListener("error", function(ev){
+    var d = document.getElementById("errnote");
+    if(!d){
+      d = document.createElement("div"); d.id = "errnote";
+      d.style.cssText = "position:fixed;left:8px;right:8px;bottom:8px;z-index:99;padding:8px 12px;border-radius:12px;background:#fff3cd;color:#5a3b00;font:14px/1.4 sans-serif;border:2px solid #5a3b00";
+      document.body.appendChild(d);
+    }
+    d.textContent = "發生問題（請截圖給我）：" + (ev && ev.message ? ev.message : "未知錯誤");
+  });
+  var canSpeak = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
+
+  /* ---------- helpers ---------- */
+  function $(s, r){ return (r||document).querySelector(s); }
+  function $$(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+  function shuffle(a){
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; }
+    return a;
+  }
+  function inside(el, x, y, pad){
+    var r = el.getBoundingClientRect(); pad = pad==null ? 24 : pad;
+    return x>=r.left-pad && x<=r.right+pad && y>=r.top-pad && y<=r.bottom+pad;
+  }
+  function wobble(el){
+    el.classList.remove("wobble"); void el.offsetWidth; el.classList.add("wobble");
+    el.addEventListener("animationend", function h(){ el.classList.remove("wobble"); el.removeEventListener("animationend", h); });
+  }
+  function giveBack(el){
+    el.classList.remove("dragging"); el.classList.add("back"); el.style.transform = "";
+    setTimeout(function(){ el.classList.remove("back"); }, 320);
+  }
+  function nudge(msg){ var n = $("#nudge"); if(n) n.textContent = msg; }
+  function pickVoice(){
+    try{
+      var vs = window.speechSynthesis.getVoices() || [];
+      var zh = vs.filter(function(v){ return /zh[-_]TW/i.test(v.lang); });
+      var soft = zh.filter(function(v){ return /Meijia|美佳|Mei-Jia|Female|女/i.test(v.name); });
+      return soft[0] || zh[0] || null;
+    }catch(e){ return null; }
+  }
+  function speak(text){
+    if(!canSpeak) return;
+    try{
+      var u = new SpeechSynthesisUtterance(text); u.lang = "zh-TW"; u.rate = 0.72; u.pitch = 1.12; u.volume = 0.9;
+      var v = pickVoice(); if(v) u.voice = v;
+      window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  /* ---------- sound ---------- */
+  var audioCtx = null;
+  function ac(){
+    if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+    if(audioCtx && audioCtx.state === "suspended"){ try{ audioCtx.resume(); }catch(e){} }
+    return audioCtx;
+  }
+  function tone(freq, start, dur, type, vol){
+    try{
+      if(!state.sound) return;
+      var c = ac(); if(!c) return;
+      var t = c.currentTime + start, o = c.createOscillator(), g = c.createGain();
+      o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime((vol || 0.12) * 0.5, t+0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.05);
+    }catch(e){ /* sound is optional: never block the game */ }
+  }
+  var sfx = {
+    ok:function(){ [392,494,587].forEach(function(f,i){ tone(f, i*0.14, 0.55); }); },
+    no:function(){ tone(330,0,0.3,"sine",0.06); tone(294,0.16,0.35,"sine",0.06); },
+    put:function(){ tone(523,0,0.18,"sine",0.08); },
+    win:function(){ [392,494,587,784].forEach(function(f,i){ tone(f, i*0.16, 0.6); }); }
+  };
+
+  /* ---------- header ---------- */
+  function renderStars(){
+    var n = state.stars.filter(Boolean).length;
+    var box = $("#stars");
+    box.innerHTML = state.stars.map(function(on){ return '<span class="star'+(on?' on':'')+'">⭐</span>'; }).join("");
+    box.setAttribute("aria-label", n ? "已得到 "+n+" 顆星" : "還沒有星星");
+  }
+  function earn(i){ if(!state.stars[i]){ state.stars[i] = true; renderStars(); } }
+
+  $("#soundBtn").addEventListener("click", function(){
+    state.sound = !state.sound; this.setAttribute("aria-pressed", String(state.sound));
+    this.textContent = state.sound ? "🔊" : "🔇";
+    if(state.sound){ ac(); sfx.put(); }
+  });
+  $("#textBtn").addEventListener("click", function(){
+    state.text = !state.text; this.setAttribute("aria-pressed", String(state.text));
+    $("#app").classList.toggle("hide-text", !state.text);
+  });
+  var goals = $("#goals");
+  $("#goalBtn").addEventListener("click", function(){
+    if(goals.showModal){ goals.showModal(); } else { goals.setAttribute("open",""); }
+  });
+  $("#goalClose").addEventListener("click", function(){
+    if(goals.close){ goals.close(); } else { goals.removeAttribute("open"); }
+  });
+  $("#teacherBtn").addEventListener("click", function(){
+    if(goals.close){ goals.close(); } else { goals.removeAttribute("open"); }
+    showTeacher();
+  });
+
+  /* ---------- drag / tap ---------- */
+  function enableDrag(el, getTargets, onDrop, onTap){
+    var id = null, sx = 0, sy = 0, dragging = false;
+    el.addEventListener("pointerdown", function(e){
+      if(e.pointerType === "mouse" && e.button !== 0) return;
+      ac();
+      id = e.pointerId; sx = e.clientX; sy = e.clientY; dragging = false;
+      try{ el.setPointerCapture(id); }catch(err){}
+    });
+    el.addEventListener("pointermove", function(e){
+      if(e.pointerId !== id) return;
+      var dx = e.clientX - sx, dy = e.clientY - sy;
+      if(!dragging && Math.hypot(dx, dy) > 8){
+        dragging = true; el.classList.remove("back"); el.classList.add("dragging");
+      }
+      if(dragging){
+        el.style.transform = "translate("+dx+"px,"+dy+"px) scale(1.08)";
+        getTargets().forEach(function(t){ t.el.classList.toggle("hot", inside(t.el, e.clientX, e.clientY)); });
+      }
+    });
+    function finish(e, cancelled){
+      if(e.pointerId !== id) return;
+      id = null;
+      if(!dragging) return;
+      dragging = false;
+      el._dj = true; setTimeout(function(){ el._dj = false; }, 80);
+      var hit = null;
+      getTargets().forEach(function(t){
+        t.el.classList.remove("hot");
+        if(!cancelled && !hit && inside(t.el, e.clientX, e.clientY)) hit = t;
+      });
+      el.classList.remove("dragging");
+      if(hit){ onDrop(hit.data, el); } else { giveBack(el); }
+    }
+    el.addEventListener("pointerup", function(e){ finish(e, false); });
+    el.addEventListener("pointercancel", function(e){ finish(e, true); });
+    el.addEventListener("click", function(){ if(el._dj) return; onTap(el); });
+  }
+
+  /* ---------- gentle voice + teacher recordings ---------- */
+  var currentAudio = null;
+  var CLIP_PREFIX = "fruitgame:clip:";
+  function loadClip(key){ try{ return key ? (localStorage.getItem(CLIP_PREFIX+key) || null) : null; }catch(e){ return null; } }
+  function saveClip(key, d){ try{ localStorage.setItem(CLIP_PREFIX+key, d); return true; }catch(e){ return false; } }
+  function delClip(key){ try{ localStorage.removeItem(CLIP_PREFIX+key); }catch(e){} }
+  function stopPlayback(){
+    if(canSpeak){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+    if(currentAudio){ try{ currentAudio.pause(); }catch(e){} currentAudio = null; }
+  }
+  function playData(d){
+    stopPlayback();
+    try{ currentAudio = new Audio(d); var p = currentAudio.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+  }
+  function playModel(key, text){ var d = loadClip(key); if(d){ playData(d); } else { speak(text); } }
+  function praise(fallback){ var d = loadClip("praise"); if(d){ playData(d); } else { fallback(); } }
+  function toDataURL(blob, cb){
+    var r = new FileReader();
+    r.onload = function(){ cb(r.result); };
+    r.onerror = function(){ cb(null); };
+    r.readAsDataURL(blob);
+  }
+  /* records one clip; returns {stop} or null when recording is unavailable */
+  function recordOnce(onStart, onBlob, onFail){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+      onFail("這個瀏覽器無法錄音，請改用 Safari 或 Chrome 直接開啟連結"); return null;
+    }
+    var ctl = {stopRequested:false, stop:function(){ ctl.stopRequested = true; }};
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+      var mime = pickMime(), rec, chunks = [];
+      try{ rec = mime ? new MediaRecorder(s, {mimeType:mime}) : new MediaRecorder(s); }
+      catch(e){ s.getTracks().forEach(function(t){ t.stop(); }); onFail("無法開始錄音"); return; }
+      rec.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+      rec.onstop = function(){
+        s.getTracks().forEach(function(t){ t.stop(); });
+        if(chunks.length){ onBlob(new Blob(chunks, {type: rec.mimeType || mime || "audio/webm"})); }
+        else { onFail("沒有錄到聲音，請再試一次"); }
+      };
+      ctl.stop = function(){ if(rec.state !== "inactive"){ try{ rec.stop(); }catch(e){} } };
+      rec.start(); onStart();
+      if(ctl.stopRequested){ ctl.stop(); } else { setTimeout(function(){ ctl.stop(); }, 20000); }
+    }).catch(function(err){
+      onFail(err && err.name === "NotAllowedError"
+        ? "沒有麥克風權限：請按「允許」，或用瀏覽器直接開啟連結"
+        : "無法使用麥克風");
+    });
+    return ctl;
+  }
+
+  /* ---------- media helpers ---------- */
+  var activeStop = null;
+  function stopMedia(){
+    if(activeStop){ try{ activeStop(); }catch(e){} activeStop = null; }
+    stopPlayback();
+  }
+  var TRI = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M32 18L84 50L32 82Z" fill="#2E4A17" stroke="#2E4A17" stroke-width="6" stroke-linejoin="round"/></svg>';
+  function pickMime(){
+    var c = ["audio/webm;codecs=opus","audio/mp4","audio/webm","audio/ogg;codecs=opus"];
+    if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return "";
+    for(var i=0;i<c.length;i++){ if(MediaRecorder.isTypeSupported(c[i])) return c[i]; }
+    return "";
+  }
+
+  /* ---------- recorder: record, play back, self-check ---------- */
+  function mountRecorder(host, modelText, clipKey){
+    host.innerHTML =
+      '<div class="rec">' +
+        ((canSpeak || loadClip(clipKey)) ? '<button class="modelbtn" id="modelBtn" aria-label="聽示範" title="聽示範">🔊</button>' : '') +
+        '<button class="recbtn" id="recBtn" aria-label="錄音" title="錄下自己的聲音">🎙️</button>' +
+        '<button class="playbtn" id="mineBtn" aria-label="聽自己的聲音" title="聽自己的聲音" disabled>' + TRI + '</button>' +
+      '</div>' +
+      '<div class="selfcheck" id="selfcheck" hidden>' +
+        '<button id="goodBtn" aria-label="我說得很好" title="我說得很好">😊</button>' +
+        '<button id="againRec" aria-label="再錄一次" title="再錄一次">🤔</button>' +
+      '</div>';
+    var recBtn = $("#recBtn", host), mineBtn = $("#mineBtn", host), check = $("#selfcheck", host);
+    var modelBtn = $("#modelBtn", host), good = $("#goodBtn", host), again = $("#againRec", host);
+    var recorder = null, stream = null, chunks = [], url = null, audio = null, timer = null, recording = false;
+
+    function releaseStream(){
+      if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+    }
+    function setUI(on){
+      recording = on; recBtn.classList.toggle("on", on);
+      recBtn.textContent = on ? "⏹" : "🎙️";
+      recBtn.setAttribute("aria-label", on ? "停止錄音" : "錄音");
+    }
+    function stopRec(){
+      clearTimeout(timer);
+      if(recorder && recorder.state !== "inactive"){ try{ recorder.stop(); }catch(e){} }
+      else { releaseStream(); }
+      setUI(false);
+    }
+    function clearTake(){
+      if(audio){ audio.pause(); audio = null; }
+      if(url){ URL.revokeObjectURL(url); url = null; }
+      mineBtn.disabled = true; check.hidden = true; good.classList.remove("chosen");
+    }
+    function fail(msg){ releaseStream(); setUI(false); nudge(msg); }
+
+    function startRec(){
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+        fail("這個瀏覽器無法錄音，請改用 Safari 或 Chrome 直接開啟連結"); return;
+      }
+      stopPlayback(); clearTake(); nudge("");
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){
+        stream = s; chunks = [];
+        var mime = pickMime();
+        try{ recorder = mime ? new MediaRecorder(s, {mimeType:mime}) : new MediaRecorder(s); }
+        catch(e){ fail("無法開始錄音"); return; }
+        recorder.ondataavailable = function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+        recorder.onstop = function(){
+          releaseStream();
+          if(!chunks.length) return;
+          var blob = new Blob(chunks, {type: recorder.mimeType || mime || "audio/webm"});
+          url = URL.createObjectURL(blob); audio = new Audio(url);
+          mineBtn.disabled = false; check.hidden = false;
+        };
+        recorder.start(); setUI(true);
+        timer = setTimeout(stopRec, 15000);
+      }).catch(function(err){
+        fail(err && err.name === "NotAllowedError"
+          ? "沒有麥克風權限：請按「允許」，或用瀏覽器直接開啟連結"
+          : "無法使用麥克風");
+      });
+    }
+
+    recBtn.addEventListener("click", function(){ ac(); if(recording){ stopRec(); } else { startRec(); } });
+    mineBtn.addEventListener("click", function(){
+      if(!audio) return;
+      audio.currentTime = 0;
+      var p = audio.play(); if(p && p.catch) p.catch(function(){});
+    });
+    if(modelBtn) modelBtn.addEventListener("click", function(){ playModel(clipKey, modelText); });
+    good.addEventListener("click", function(){ good.classList.add("chosen"); sfx.ok(); });
+    again.addEventListener("click", function(){ clearTake(); nudge("再說一次～"); recBtn.focus(); });
+
+    activeStop = function(){
+      clearTimeout(timer);
+      if(recorder && recorder.state !== "inactive"){ recorder.onstop = null; try{ recorder.stop(); }catch(e){} }
+      releaseStream();
+      if(audio){ audio.pause(); }
+      if(url){ URL.revokeObjectURL(url); }
+    };
+  }
+
+  /* ---------- start ---------- */
+  function trainStatic(){
+    return '<div class="train" aria-hidden="true"><div class="engine">🚂</div>' +
+      '<div class="car c1"><span class="num">1</span></div><div class="car c2"><span class="num">2</span></div><div class="car c3"><span class="num">3</span></div></div>';
+  }
+  function showStart(){
+    stopMedia();
+    state.stars = [false,false,false,false]; state.done = [false,false,false,false]; renderStars();
+    stage.innerHTML =
+      '<div class="start">' +
+        '<h1 class="title">動動腦！<br>水果大冒險</h1>' +
+        '<p class="banner">小火車載著我們，一起說故事！</p>' +
+        '<div class="fruitrow" aria-hidden="true">🍊🍉🍇🍎🥝🍓</div>' +
+        '<div style="width:100%">' + trainStatic() + '</div>' +
+        '<button class="nextbtn big" id="startBtn" aria-label="開始玩" title="開始玩">' + TRI + '</button>' +
+        '<button class="btn" id="practiceBtn">🚂 自由練習</button>' +
+      '</div>';
+    $("#startBtn").addEventListener("click", function(){ ac(); sfx.put(); showLevel(0); });
+    $("#practiceBtn").addEventListener("click", function(){ ac(); sfx.put(); showHub(); });
+  }
+
+  /* ---------- levels ---------- */
+  function cellHTML(k){
+    var it = ITEMS[k];
+    return '<div class="cell"><span class="art">'+it.art+'</span><span class="name">'+it.name+'</span></div>';
+  }
+  function showLevel(n){
+    stopMedia();
+    var L = LEVELS[n], wrong = 0;
+    var opts = shuffle(L.options.slice());
+    stage.innerHTML =
+      '<h1 class="prompt">找找看，<span class="qmark">？</span>要放什麼</h1>' +
+      '<div class="grid">' + L.grid.map(function(k){
+        return k ? cellHTML(k) : '<div class="cell slot" id="slot"><span class="q">？</span></div>';
+      }).join("") + '</div>' +
+      '<div class="nudge" id="nudge" role="status" aria-live="polite"></div>' +
+      '<div class="tray" id="tray">' + opts.map(function(k){
+        var it = ITEMS[k];
+        return '<button class="opt" data-k="'+k+'" aria-label="'+it.name+'"><span class="art">'+it.art+'</span><span class="name">'+it.name+'</span></button>';
+      }).join("") + '</div>';
+
+    var slot = $("#slot");
+    function tryPlace(el){
+      var k = el.dataset.k;
+      if(k === L.answer){
+        praise(sfx.ok);
+        slot.classList.remove("hot"); slot.classList.add("filled");
+        slot.innerHTML = '<span class="art">'+ITEMS[k].art+'</span><span class="name">'+ITEMS[k].name+'</span>';
+        earn(n); nudge("");
+        showPanel();
+      } else {
+        wrong++; sfx.no(); wobble(el); giveBack(el);
+        nudge(wrong < 2 ? "再找找看～" : "想想看，哪一個和它們是同一類？");
+      }
+    }
+    $$(".opt").forEach(function(el){
+      enableDrag(el, function(){ return [{el:slot, data:0}]; }, function(d, e){ tryPlace(e); }, tryPlace);
+    });
+
+    function showPanel(){
+      var it = ITEMS[L.answer];
+      var nextLabel = n < LEVELS.length - 1 ? "下一關" : "上小火車";
+      $("#tray").innerHTML =
+        '<div class="panel">' +
+          '<h2>真棒！答對了</h2>' +
+          '<p>說說看，為什麼是 '+it.name+' 呢？</p>' +
+          '<div id="recHost"></div>' +
+          '<div class="hintbox" id="hintbox" hidden>'+L.hint+'</div>' +
+          '<div class="actions"><button class="btn" id="hintBtn">💡 看提示</button>' +
+          '<button class="nextbtn" id="nextBtn" aria-label="'+nextLabel+'" title="'+nextLabel+'">'+TRI+'</button></div>' +
+        '</div>';
+      mountRecorder($("#recHost"), L.hint, "lv"+n);
+      $("#hintBtn").addEventListener("click", function(){
+        $("#hintbox").hidden = false; this.style.display = "none";
+      });
+      $("#nextBtn").addEventListener("click", function(){
+        sfx.put();
+        if(n < LEVELS.length - 1){ showLevel(n+1); } else { showTrain(0); }
+      });
+    }
+  }
+
+  /* ---------- train (main set + free practice sets) ---------- */
+  function showTrain(setIdx){
+    stopMedia();
+    var S = SETS[setIdx], main = (setIdx === 0), order = S.items;
+    var SAYS = sayParts(S), full = SAYS[3].replace(/<[^>]+>/g, "");
+    var filled = 0, wrong = 0;
+    var items = shuffle(order.slice());
+    while(items.join() === order.join()) items = shuffle(order.slice());
+
+    stage.innerHTML =
+      '<h1 class="prompt">小火車來喔～</h1>' +
+      '<p class="sub">把東西放上車廂，用「先…再…」說說看</p>' +
+      '<div class="say" id="say" aria-live="polite">'+SAYS[0]+'</div>' +
+      '<div class="nudge" id="nudge" role="status" aria-live="polite"></div>' +
+      '<div class="tray" id="tray">' + items.map(function(k){
+        var it = ITEMS[k];
+        return '<button class="opt" data-k="'+k+'" aria-label="'+it.name+'"><span class="art">'+it.art+'</span><span class="name">'+it.name+'</span></button>';
+      }).join("") + '</div>' +
+      '<div class="trainwrap" id="trainwrap"><div class="train" id="train"><div class="engine" aria-hidden="true">🚂</div>' +
+        [1,2,3].map(function(i){ return '<div class="car c'+i+'" data-i="'+(i-1)+'"><span class="num">'+i+'</span><span class="slotart"></span></div>'; }).join("") +
+      '</div><div class="track"></div></div>';
+
+    var cars = $$(".car");
+    var say = $("#say");
+
+    function tryCar(el, i){
+      var k = el.dataset.k;
+      if(i !== filled){
+        sfx.no(); wobble(el); giveBack(el);
+        nudge(k === order[i] ? "先放前面的車廂喔～" : "想想看，先做什麼呢？");
+        return;
+      }
+      if(k !== order[i]){
+        wrong++; sfx.no(); wobble(el); giveBack(el);
+        nudge(wrong < 2 ? "想想看，先做什麼呢？" : "第 "+(i+1)+" 節車廂，要放哪一個呢？");
+        return;
+      }
+      nudge("");
+      var car = cars[i];
+      car.classList.add("filled"); car.classList.remove("hot");
+      $(".slotart", car).innerHTML = ITEMS[k].art;
+      el.classList.add("used"); el.style.transform = "";
+      sfx.put();
+      filled++;
+      say.innerHTML = SAYS[filled];
+      say.classList.remove("pop"); void say.offsetWidth; say.classList.add("pop");
+      if(filled === 3){ finish(); }
+    }
+    $$(".opt").forEach(function(el){
+      enableDrag(el,
+        function(){ return cars.map(function(c, i){ return {el:c, data:i}; }); },
+        function(i, e){ tryCar(e, i); },
+        function(e){ tryCar(e, filled); });
+    });
+
+    function finish(){
+      state.done[setIdx] = true;
+      if(main) earn(3);
+      praise(sfx.win); nudge("");
+      setTimeout(function(){ $("#train").classList.add("go"); }, 700);
+      setTimeout(function(){
+        $("#trainwrap").innerHTML = '<div class="juice" aria-hidden="true">'+S.reward+'</div>';
+        $("#tray").innerHTML =
+          '<div class="panel">' +
+            '<h2>'+S.win+'</h2>' +
+            '<p>把完整的句子說一說</p>' +
+            '<div class="hintbox">'+full+'</div>' +
+            '<div id="recHost"></div>' +
+            '<div class="actions">' +
+              '<button class="btn icon" id="againBtn" aria-label="再玩一次" title="再玩一次">🔁</button>' +
+              '<button class="nextbtn" id="nextBtn" aria-label="自由練習" title="自由練習">'+TRI+'</button>' +
+              '<button class="btn icon" id="homeBtn" aria-label="回到開頭" title="回到開頭">🏠</button>' +
+            '</div>' +
+          '</div>';
+        mountRecorder($("#recHost"), full, "set"+setIdx);
+        $("#againBtn").addEventListener("click", function(){ showTrain(setIdx); });
+        $("#nextBtn").addEventListener("click", function(){ sfx.put(); showHub(); });
+        $("#homeBtn").addEventListener("click", showStart);
+      }, 2700);
+    }
+  }
+
+  /* ---------- free practice hub ---------- */
+  function showHub(){
+    stopMedia();
+    stage.innerHTML =
+      '<h1 class="prompt">🚂 自由練習</h1>' +
+      '<p class="sub">選一組，開火車！</p>' +
+      '<div class="hub">' + SETS.map(function(S, i){
+        var label = S.items.map(function(k){ return ITEMS[k].name; }).join("、");
+        return '<button class="combo'+(state.done[i] ? " done" : "")+'" data-i="'+i+'" aria-label="'+label+'">' +
+          S.items.map(function(k){ return '<span class="art">'+ITEMS[k].art+'</span>'; })
+                 .join('<span class="arr" aria-hidden="true">▸</span>') +
+        '</button>';
+      }).join("") + '</div>' +
+      '<div class="actions" style="margin-top:auto"><button class="btn icon" id="homeBtn" aria-label="回到開頭" title="回到開頭">🏠</button></div>';
+    $$(".combo").forEach(function(b){
+      b.addEventListener("click", function(){ ac(); sfx.put(); showTrain(Number(b.dataset.i)); });
+    });
+    $("#homeBtn").addEventListener("click", showStart);
+  }
+
+  /* ---------- teacher settings: record model voice ---------- */
+  function clipList(){
+    var list = [{key:"praise", label:"稱讚語（答對時播放），例如：「真棒！」"}];
+    LEVELS.forEach(function(L, i){ list.push({key:"lv"+i, label:"第"+(i+1)+"關：「"+L.hint+"」"}); });
+    SETS.forEach(function(S, i){
+      var t = sayParts(S)[3].replace(/<[^>]+>/g, "");
+      list.push({key:"set"+i, label:"小火車"+(i === 0 ? "（主關卡）" : "自由練習"+i)+"：「"+t+"」"});
+    });
+    return list;
+  }
+  function showTeacher(){
+    stopMedia();
+    var busyKey = null;
+    stage.innerHTML =
+      '<h1 class="prompt">老師設定</h1>' +
+      '<p class="sub">錄下您的聲音，孩子按 🔊 就會聽到老師的示範</p>' +
+      '<div class="nudge" id="nudge" role="status" aria-live="polite"></div>' +
+      '<div class="tlist">' + clipList().map(function(c){
+        return '<div class="trow" data-key="'+c.key+'"><div class="tl">'+c.label+'<span class="tstat"></span></div>' +
+          '<div class="tb"><button class="trec" aria-label="錄音" title="錄音">🎙️</button>' +
+          '<button class="tplay" aria-label="播放" title="播放">▶</button>' +
+          '<button class="tdel" aria-label="刪除" title="刪除錄音">🗑️</button></div></div>';
+      }).join("") + '</div>' +
+      '<p class="tip">小提醒：請在安靜的地方，放慢速度、用溫柔的語氣說。錄音只存在這台裝置的瀏覽器裡，換裝置或清除瀏覽資料後需要重錄。沒有錄音的項目會用機器朗讀代替。</p>' +
+      '<div class="actions" style="margin-top:auto"><button class="btn icon" id="homeBtn" aria-label="回到開頭" title="回到開頭">🏠</button></div>';
+
+    function refresh(row){
+      var has = !!loadClip(row.dataset.key);
+      $(".tstat", row).textContent = has ? "✓ 已錄老師的聲音" : "尚未錄音（目前用機器朗讀）";
+      $(".tplay", row).disabled = !has; $(".tdel", row).disabled = !has;
+    }
+    $$(".trow").forEach(function(row){
+      var key = row.dataset.key, rb = $(".trec", row), ctl = null;
+      refresh(row);
+      function done(){ busyKey = null; ctl = null; rb.classList.remove("on"); rb.textContent = "🎙️"; }
+      rb.addEventListener("click", function(){
+        ac();
+        if(busyKey === key){ if(ctl) ctl.stop(); return; }
+        if(busyKey) return;
+        stopPlayback(); nudge("");
+        busyKey = key;
+        ctl = recordOnce(
+          function(){ rb.classList.add("on"); rb.textContent = "⏹"; },
+          function(blob){
+            done();
+            toDataURL(blob, function(d){
+              nudge(d && saveClip(key, d) ? "已儲存老師的聲音" : "儲存失敗：空間不足或瀏覽器不允許儲存");
+              refresh(row);
+            });
+          },
+          function(msg){ done(); nudge(msg); }
+        );
+        if(!ctl) busyKey = null;
+      });
+      $(".tplay", row).addEventListener("click", function(){ var d = loadClip(key); if(d) playData(d); });
+      $(".tdel", row).addEventListener("click", function(){ delClip(key); nudge("已刪除"); refresh(row); });
+    });
+    $("#homeBtn").addEventListener("click", showStart);
+  }
+
+  renderStars();
+  showStart();
+})();
+</script>
+</body>
+</html>
